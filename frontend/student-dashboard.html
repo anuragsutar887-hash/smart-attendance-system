@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        :root {
+            --primary-grad: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+            --accent-grad: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        }
+
+        .banner-card {
+            background: var(--primary-grad);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            color: #fff;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(109, 40, 217, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-card::after {
+            content: '';
+            position: absolute;
+            right: -30px;
+            bottom: -30px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+        .banner-content { z-index: 1; max-width: 650px; }
+        .banner-eyebrow { text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; opacity: 0.85; margin-bottom: 0.4rem; }
+        .banner-title { font-size: 1.65rem; font-weight: 800; margin-bottom: 0.4rem; }
+        .banner-desc { font-size: 0.92rem; opacity: 0.9; margin-bottom: 0.75rem; }
+        .banner-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .banner-tag { background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.25); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem; }
+        .stat-box {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.35rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            border-top: 4px solid var(--primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .stat-box .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .stat-box .stat-num { font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1.1; margin-bottom: 0.35rem; }
+        .stat-box .stat-sub { font-size: 0.82rem; color: var(--text-muted); }
+        .stat-box.percentage .stat-num { color: #6d28d9; }
+        .stat-box.present { border-top-color: #10b981; }
+        .stat-box.present .stat-num { color: #10b981; }
+        .stat-box.absent { border-top-color: #ef4444; }
+        .stat-box.absent .stat-num { color: #ef4444; }
+
+        .alert-callout {
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+        .alert-callout.good { background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #065f46; }
+        .alert-callout.warning { background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e; }
+        .alert-callout.critical { background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; }
+
+        .content-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            margin-bottom: 1.75rem;
+        }
+        .content-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .content-card-header h2 { font-size: 1.15rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+
+        .progress-track {
+            background: #f1f5f9;
+            border-radius: 9999px;
+            height: 9px;
+            overflow: hidden;
+            width: 100%;
+            margin-top: 0.4rem;
+        }
+        .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.6s ease; }
+        .progress-fill.high { background: linear-gradient(90deg, #10b981, #059669); }
+        .progress-fill.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .progress-fill.low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.28rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-pill.eligible { background: #dcfce7; color: #166534; }
+        .status-pill.shortage { background: #fee2e2; color: #991b1b; }
+        .status-pill.present { background: #dcfce7; color: #15803d; }
+        .status-pill.absent { background: #fee2e2; color: #b91c1c; }
+
+        .modern-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .modern-table th { background: #faf8ff; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-light); }
+        .modern-table td { padding: 1rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.92rem; color: var(--text-body); vertical-align: middle; }
+        .modern-table tr:hover { background: #faf5ff; }
+    </style>
+</head>
+<body class="dashboard-page student-page">
+    <!-- Mobile hamburger toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="app-layout">
+        <!-- Student Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-mark">SA</div>
+                <div>
+                    <h2>Smart Attendance</h2>
+                    <span>Student Portal</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="student-dashboard.html" class="active"><span>📊</span> My Attendance</a>
+            </nav>
+            <button onclick="Auth.logout()" class="logout-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:0.9rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem;color:#fca5a5;">
+                <span>🚪</span> Sign Out
+            </button>
+        </aside>
+
+        <!-- Main Student Workspace -->
+        <main class="main-content">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div>
+                    <span class="page-label">ACADEMIC ATTENDANCE RECORD</span>
+                    <h1>My Attendance Overview</h1>
+                </div>
+                <div class="profile" style="display:flex;align-items:center;gap:0.75rem;background:#fff;padding:0.4rem 0.85rem;border-radius:9999px;border:1px solid var(--border-light);">
+                    <div class="profile-avatar" id="header-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--accent-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">S</div>
+                    <div style="text-align:left;line-height:1.2;">
+                        <strong id="header-user-name" style="font-size:0.9rem;color:var(--text-main);display:block;">Student</strong>
+                        <span id="header-prn" style="font-size:0.75rem;color:var(--text-muted);">PRN</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Student Profile Banner -->
+            <div class="banner-card">
+                <div class="banner-content">
+                    <div class="banner-eyebrow">Enrolled Student Portal</div>
+                    <div class="banner-title" id="student-welcome-title">Welcome, Student 👋</div>
+                    <div class="banner-desc">Monitor your lecture attendance across all semester courses. Maintain 75% or above for exam eligibility.</div>
+                    <div class="banner-tags">
+                        <span class="banner-tag" id="tag-prn">PRN: --</span>
+                        <span class="banner-tag" id="tag-year">Year: --</span>
+                        <span class="banner-tag" id="tag-div">Division: --</span>
+                        <span class="banner-tag" id="tag-dept">Dept: --</span>
+                        <span class="banner-tag" id="tag-email">Email: --</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Eligibility Callout -->
+            <div class="alert-callout" id="attendance-callout">
+                <span id="callout-icon">📊</span>
+                <span id="callout-text">Calculating attendance standing...</span>
+            </div>
+
+            <!-- 4 Key Metrics -->
+            <div class="stats-grid">
+                <div class="stat-box percentage">
+                    <div class="stat-label">Overall Percentage</div>
+                    <div class="stat-num" id="stat-pct">--%</div>
+                    <div class="stat-sub">Minimum requirement: 75%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Conducted</div>
+                    <div class="stat-num" id="stat-total">--</div>
+                    <div class="stat-sub">Lectures held to date</div>
+                </div>
+                <div class="stat-box present">
+                    <div class="stat-label">Classes Attended</div>
+                    <div class="stat-num" id="stat-present">--</div>
+                    <div class="stat-sub">Marked Present</div>
+                </div>
+                <div class="stat-box absent">
+                    <div class="stat-label">Classes Missed</div>
+                    <div class="stat-num" id="stat-absent">--</div>
+                    <div class="stat-sub">Marked Absent</div>
+                </div>
+            </div>
+
+            <!-- Subject-Wise Attendance Breakdown Table -->
+            <div class="content-card" id="subject-attendance-section">
+                <div class="content-card-header">
+                    <h2><span>📚</span> Subject-Wise Attendance Breakdown</h2>
+                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Updated after each class session</span>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Course & Code</th>
+                                <th>Lectures Held</th>
+                                <th>Attended</th>
+                                <th>Missed</th>
+                                <th>Attendance %</th>
+                                <th>Eligibility Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-subjects-tbody">
+                            <tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">⏳ Loading subject breakdown...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Attendance History Log -->
+            <div class="content-card" id="history-section">
+                <div class="content-card-header">
+                    <h2><span>🕒</span> Recent Attendance Log</h2>
+                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Last 15 sessions</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Attendance Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-history-tbody">
+                            <tr><td colspan="3" style="text-align: center; padding: 2rem; color: #64748b;">⏳ Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        const API = API_BASE;
+
+        // Must be student
+        if (!Auth.requireRole('student')) {
+            // redirected if not student
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(API + '/api/student/dashboard', { headers: await Auth.apiHeaders() });
+                if (res.status === 401) { Auth.clearLocal(); window.location.href = 'index.html'; return; }
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+
+                const data = json.data;
+                const p = data.profile;
+
+                // Profile
+                const initial = p.name ? p.name.charAt(0).toUpperCase() : 'S';
+                document.getElementById('header-avatar').textContent = initial;
+                document.getElementById('header-user-name').textContent = p.name || 'Student';
+                document.getElementById('header-prn').textContent = p.prn || 'PRN';
+                document.getElementById('student-welcome-title').textContent = 'Welcome back, ' + (p.name || 'Student') + ' 👋';
+
+                document.getElementById('tag-prn').textContent = 'PRN: ' + (p.prn || '--');
+                document.getElementById('tag-year').textContent = 'Year ' + (p.year || '--');
+                document.getElementById('tag-div').textContent = 'Division ' + (p.division || '--');
+                document.getElementById('tag-dept').textContent = 'Dept: ' + (p.department || '--');
+                document.getElementById('tag-email').textContent = 'Email: ' + (p.email || '--');
+
+                // Stats
+                const pct = data.overall_percentage;
+                document.getElementById('stat-pct').textContent = pct.toFixed(1) + '%';
+                document.getElementById('stat-total').textContent = data.overall_total;
+                document.getElementById('stat-present').textContent = data.overall_present;
+                document.getElementById('stat-absent').textContent = data.overall_absent;
+
+                // Callout
+                const callout = document.getElementById('attendance-callout');
+                const calloutIcon = document.getElementById('callout-icon');
+                const calloutText = document.getElementById('callout-text');
+                if (pct >= 75) {
+                    callout.className = 'alert-callout good';
+                    calloutIcon.textContent = '🎉';
+                    calloutText.textContent = `Great job! Your cumulative attendance is ${pct.toFixed(1)}%, which satisfies the university eligibility threshold.`;
+                } else {
+                    callout.className = 'alert-callout warning';
+                    calloutIcon.textContent = '⚠️';
+                    calloutText.textContent = `Attention: Your cumulative attendance is ${pct.toFixed(1)}% (below 75%). Please attend forthcoming lectures to avoid shortage penalties.`;
+                }
+
+                // Table
+                renderSubjectsTable(data.subjects);
+
+                // History
+                loadHistory();
+            } catch (err) {
+                document.getElementById('student-subjects-tbody').innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444;">
+                        ❌ ${err.message || 'Failed to load attendance'}
+                    </td></tr>`;
+            }
+        }
+
+        function renderSubjectsTable(subjects) {
+            const tbody = document.getElementById('student-subjects-tbody');
+            if (!subjects || subjects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2.5rem;color:#64748b;">No subjects assigned yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = subjects.map(s => {
+                const p = s.percentage;
+                let colorClass = 'high';
+                let statusBadge = '<span class="status-pill eligible">✓ Eligible</span>';
+
+                if (p < 75) {
+                    colorClass = p < 60 ? 'low' : 'medium';
+                    statusBadge = '<span class="status-pill shortage">⚠️ Shortage</span>';
+                }
+
+                return `
+                <tr>
+                    <td>
+                        <strong style="color:var(--text-main);">${escapeHtml(s.subject_name)}</strong><br/>
+                        <span style="font-size:0.75rem;color:#64748b;font-family:monospace;background:#f1f5f9;padding:0.15rem 0.4rem;border-radius:4px;">${escapeHtml(s.subject_code)}</span>
+                    </td>
+                    <td><strong style="color:#1e293b;">${s.total_lectures}</strong></td>
+                    <td><strong style="color:#10b981;">${s.present}</strong></td>
+                    <td><strong style="color:#ef4444;">${s.absent}</strong></td>
+                    <td style="min-width: 140px;">
+                        <div style="display:flex;justify-content:space-between;font-size:0.82rem;font-weight:700;">
+                            <span style="color:var(--text-main);">${p.toFixed(1)}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill ${colorClass}" style="width: ${Math.min(p, 100)}%;"></div>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch(API + '/api/student/attendance', { headers: await Auth.apiHeaders() });
+                const history = await res.json();
+                const tbody = document.getElementById('student-history-tbody');
+
+                if (!Array.isArray(history) || history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:2rem;color:#64748b;">No recent attendance sessions logged.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = history.slice(0, 15).map(h => `
+                    <tr>
+                        <td><span style="font-family:monospace;font-size:0.88rem;color:#334155;">${escapeHtml(h.date)}</span></td>
+                        <td><strong>${escapeHtml(h.branch || 'Course Lecture')}</strong></td>
+                        <td>
+                            <span class="status-pill ${h.status === 'Present' ? 'present' : 'absent'}">
+                                ${h.status === 'Present' ? '● Present' : '● Absent'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                document.getElementById('student-history-tbody').innerHTML =
+                    `<tr><td colspan="3" style="text-align:center;padding:1.5rem;color:#ef4444;">Could not load history.</td></tr>`;
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

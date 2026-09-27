@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="management-page">
+    <!-- Mobile hamburger toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-mark">SA</div>
+            <div>
+                <h2>Smart Attendance</h2>
+                <span>Faculty Workspace</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="students.html" class="active"><span>👥</span> Students</a>
+            <a href="attendance.html"><span>✏️</span> Attendance</a>
+            <a href="reports.html"><span>📈</span> Reports</a>
+        </nav>
+
+        <button onclick="Auth.logout()" class="logout-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:0.9rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem;color:#fca5a5;">
+            <span>🚪</span> Sign Out
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="page-label">DEPARTMENT RECORDS</p>
+                <h1>Student Management</h1>
+                <p class="management-intro">Manage department student records and enrollment information.</p>
+            </div>
+            <div class="profile" style="display:flex;align-items:center;gap:0.75rem;background:#fff;padding:0.4rem 0.85rem;border-radius:9999px;border:1px solid var(--border-light);">
+                <div class="profile-avatar" id="header-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, #7c3aed, #a855f7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">T</div>
+                <div>
+                    <strong id="header-user-name" style="font-size:0.9rem;display:block;">Teacher</strong>
+                    <span id="header-dept" style="font-size:0.75rem;color:var(--text-muted);">Faculty</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="management-card" aria-labelledby="add-student-heading">
+            <p class="eyebrow">Student records</p>
+            <h2 id="add-student-heading">Add / Edit Student</h2>
+
+            <form id="student-form" class="student-form">
+                <div class="form-field">
+                    <label for="roll-number">PRN / Roll Number</label>
+                    <input type="text" id="roll-number" placeholder="e.g. 2301099A">
+                </div>
+                <div class="form-field">
+                    <label for="student-name">Full Name</label>
+                    <input type="text" id="student-name" placeholder="Student name">
+                </div>
+                <div class="form-field">
+                    <label for="student-branch">Department</label>
+                    <input type="text" id="student-branch" placeholder="e.g. CSE">
+                </div>
+                <div class="form-field">
+                    <label for="student-year">Academic Year</label>
+                    <input type="number" id="student-year" placeholder="1-6" min="1" max="6">
+                </div>
+                <div class="form-field">
+                    <label for="student-email">Email</label>
+                    <input type="email" id="student-email" placeholder="student@college.edu">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" id="student-submit" class="primary-button">Add Student</button>
+                    <button type="button" id="cancel-edit" class="secondary-button" style="display:none;">Cancel</button>
+                </div>
+            </form>
+            <p id="form-message" class="form-message" aria-live="polite"></p>
+        </section>
+
+        <section class="management-card" aria-labelledby="student-list-heading">
+            <div class="table-toolbar">
+                <div>
+                    <p class="eyebrow">Directory</p>
+                    <h2 id="student-list-heading">Enrolled Students</h2>
+                </div>
+                <div class="search-wrapper">
+                    <label for="student-search">Search students</label>
+                    <input type="search" id="student-search" class="search-box" placeholder="Search by name, PRN, or branch...">
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="student-table">
+                    <thead>
+                        <tr>
+                            <th>PRN</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Year</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        <tr><td colspan="6" class="empty-row"><div class="empty-state-content"><span class="empty-icon">⏳</span><p>Loading students...</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

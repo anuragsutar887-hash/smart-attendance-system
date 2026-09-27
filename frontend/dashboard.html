@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Dashboard | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        :root {
+            --primary-grad: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+            --accent-grad: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        }
+
+        .banner-card {
+            background: var(--primary-grad);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            color: #fff;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(109,40,217,.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-card::after {
+            content: '';
+            position: absolute;
+            right: -30px; bottom: -30px;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.08);
+            pointer-events: none;
+        }
+        .banner-content { z-index: 1; }
+        .banner-eyebrow { text-transform: uppercase; font-size: .75rem; font-weight: 800; letter-spacing: 1px; opacity: .85; margin-bottom: .4rem; }
+        .banner-title   { font-size: 1.6rem; font-weight: 800; margin-bottom: .4rem; }
+        .banner-desc    { font-size: .9rem; opacity: .9; margin-bottom: .75rem; }
+        .banner-tags    { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .banner-tag     { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.25); padding: .25rem .75rem; border-radius: 9999px; font-size: .78rem; font-weight: 600; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem; }
+        .stat-box {
+            background: #fff; border-radius: var(--radius-lg); padding: 1.35rem 1.25rem;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
+            border-top: 4px solid var(--primary); transition: transform .2s, box-shadow .2s;
+        }
+        .stat-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .stat-box .stat-label { font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .4rem; }
+        .stat-box .stat-num   { font-size: 2.1rem; font-weight: 800; color: var(--text-main); line-height: 1.1; margin-bottom: .35rem; }
+        .stat-box .stat-sub   { font-size: .8rem; color: var(--text-muted); }
+        .stat-box.green { border-top-color: #10b981; }
+        .stat-box.green .stat-num { color: #10b981; }
+
+        .content-card {
+            background: #fff; border-radius: var(--radius-lg); padding: 1.75rem;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
+            margin-bottom: 1.75rem;
+        }
+        .content-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border-light);
+        }
+        .content-card-header h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: .5rem; margin: 0; }
+
+        .btn-primary {
+            background: var(--accent-grad); color: #fff; border: none;
+            border-radius: var(--radius-md); padding: .6rem 1.25rem; font-size: .88rem;
+            font-weight: 700; cursor: pointer; display: inline-flex; align-items: center;
+            gap: .45rem; transition: all .2s; box-shadow: 0 3px 10px rgba(124,58,237,.25);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124,58,237,.3); }
+
+        .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
+
+        .subject-card {
+            border: 2px solid #ede9fe; border-radius: var(--radius-md);
+            padding: 1.35rem; background: #fff;
+            transition: all .2s; display: flex; flex-direction: column;
+        }
+        .subject-card:hover { border-color: #7c3aed; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(124,58,237,.12); }
+
+        .sc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .5rem; }
+        .sc-code { background: #f5f3ff; color: #6d28d9; font-size: .75rem; font-weight: 800; padding: .2rem .6rem; border-radius: 6px; letter-spacing: .5px; }
+        .sc-class { background: #e0e7ff; color: #3730a3; font-size: .72rem; font-weight: 700; padding: .2rem .55rem; border-radius: 9999px; }
+        .sc-name  { font-size: 1.08rem; font-weight: 800; color: var(--text-main); margin-bottom: .85rem; flex: 1; }
+
+        .sc-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-top: auto; padding-top: .75rem; border-top: 1px solid #f1f5f9; }
+        .sc-btn {
+            padding: .5rem .2rem; font-size: .8rem; font-weight: 700;
+            border-radius: 7px; border: 1px solid transparent;
+            cursor: pointer; text-align: center; transition: all .15s;
+        }
+        .sc-btn.mark   { background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff; }
+        .sc-btn.mark:hover { opacity: .9; }
+        .sc-btn.report { background: #f8fafc; color: var(--text-main); border-color: var(--border-light); }
+        .sc-btn.report:hover { background: #f1f5f9; }
+        .sc-btn.del    { background: #fff0f0; color: #b91c1c; border-color: #fecaca; }
+        .sc-btn.del:hover { background: #fee2e2; }
+
+        .empty-subjects {
+            grid-column: 1/-1;
+            text-align: center; padding: 3.5rem 1rem;
+            border: 2px dashed #ddd6fe; border-radius: var(--radius-lg);
+            background: #fafafe;
+        }
+        .empty-subjects .empty-icon { font-size: 3rem; margin-bottom: .75rem; }
+        .empty-subjects h3 { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: .5rem; }
+        .empty-subjects p  { color: var(--text-muted); font-size: .92rem; margin-bottom: 1.25rem; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(15,23,42,.55); backdrop-filter: blur(4px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1.5rem;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: var(--radius-lg);
+            width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+            padding: 2rem; box-shadow: 0 25px 60px rgba(0,0,0,.25); position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: #f1f5f9; border: none; width: 30px; height: 30px;
+            border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; color: #64748b;
+        }
+        .modal-close:hover { background: #e2e8f0; }
+        .modal-title { font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: .25rem; }
+        .modal-sub   { font-size: .85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+        .mf-group { margin-bottom: 1.1rem; }
+        .mf-group label { display: block; font-size: .8rem; font-weight: 700; color: var(--text-main); margin-bottom: .35rem; }
+        .mf-group input, .mf-group select {
+            width: 100%; padding: .65rem .9rem;
+            border: 1.5px solid var(--border-light); border-radius: var(--radius-md);
+            font-size: .95rem; color: var(--text-main); background: #fdfdfd;
+        }
+        .mf-group input:focus, .mf-group select:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109,40,217,.1);
+        }
+        .mf-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .feedback-box {
+            padding: .65rem 1rem; border-radius: 7px; font-size: .85rem;
+            font-weight: 600; margin-bottom: 1rem; display: none;
+        }
+        .feedback-box.ok  { background: #dcfce7; color: #166534; display: block; }
+        .feedback-box.err { background: #fee2e2; color: #991b1b; display: block; }
+
+        .user-chip { display: flex; align-items: center; gap: .75rem; background: #fff; padding: .4rem .85rem; border-radius: 9999px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+        .user-chip .av { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-grad); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+        .user-chip .nm { font-weight: 700; font-size: .88rem; color: var(--text-main); display: block; }
+        .user-chip .rl { font-size: .74rem; color: var(--text-muted); }
+    </style>
+</head>
+
+<body class="dashboard-page">
+<!-- Mobile hamburger toggle -->
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-mark">SA</div>
+            <div>
+                <h2>Smart Attendance</h2>
+                <span>Faculty Workspace</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <a href="dashboard.html" class="active"><span>📊</span> Dashboard</a>
+            <a href="students.html"><span>👥</span> Students</a>
+            <a href="attendance.html"><span>✏️</span> Attendance</a>
+            <a href="reports.html"><span>📈</span> Reports</a>
+        </nav>
+        <button onclick="Auth.logout()" class="logout-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:.9rem;padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;color:#fca5a5;">
+            <span>🚪</span> Sign Out
+        </button>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <span class="page-label">FACULTY DASHBOARD</span>
+                <h1>Teacher Dashboard</h1>
+            </div>
+            <div class="user-chip">
+                <div class="av" id="hdr-av">T</div>
+                <div>
+                    <span class="nm" id="hdr-name">Teacher</span>
+                    <span class="rl" id="hdr-role">Faculty</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Profile Banner -->
+        <div class="banner-card">
+            <div class="banner-content">
+                <div class="banner-eyebrow">Faculty Management Portal</div>
+                <div class="banner-title" id="banner-greeting">Welcome, Professor 👋</div>
+                <div class="banner-desc">Add the subjects you teach, then mark daily attendance and download reports.</div>
+                <div class="banner-tags">
+                    <span class="banner-tag" id="tag-dept">Dept: --</span>
+                    <span class="banner-tag" id="tag-code">ID: --</span>
+                    <span class="banner-tag" id="tag-email">--</span>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="openAddModal()" style="z-index:1;white-space:nowrap;flex-shrink:0;">
+                ➕ Add Subject
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">My Subjects</div>
+                <div class="stat-num" id="stat-subjects">0</div>
+                <div class="stat-sub">Courses you teach</div>
+            </div>
+            <div class="stat-box green">
+                <div class="stat-label">Total Divisions</div>
+                <div class="stat-num" id="stat-divisions">0</div>
+                <div class="stat-sub">Unique year-division classes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Today</div>
+                <div class="stat-num" id="stat-today" style="font-size:1.35rem;margin-top:.3rem;">--</div>
+                <div class="stat-sub">Current session date</div>
+            </div>
+        </div>
+
+        <!-- Subjects Section -->
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2><span>📚</span> My Subjects &amp; Classes</h2>
+                <button class="btn-primary" onclick="openAddModal()">➕ Add New Subject</button>
+            </div>
+            <div class="subjects-grid" id="subjects-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:2rem;color:#64748b;">⏳ Loading...</div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ── Modal: Add Subject ── -->
+<div class="modal-backdrop" id="add-modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeAddModal()">✕</button>
+        <div class="modal-title">➕ Add a Subject You Teach</div>
+        <div class="modal-sub">Fill in the course details and the class section you're responsible for.</div>
+
+        <div class="feedback-box" id="add-fb"></div>
+
+        <div class="mf-group">
+            <label>Subject Name *</label>
+            <input id="add-name" type="text" placeholder="e.g. Data Structures & Algorithms" />
+        </div>
+        <div class="mf-group">
+            <label>Subject Code *</label>
+            <input id="add-code" type="text" placeholder="e.g. CS301" />
+        </div>
+        <div class="mf-row2">
+            <div class="mf-group">
+                <label>Academic Year *</label>
+                <select id="add-year">
+                    <option value="1">Year 1 (FE)</option>
+                    <option value="2" selected>Year 2 (SE)</option>
+                    <option value="3">Year 3 (TE)</option>
+                    <option value="4">Year 4 (BE)</option>
+                </select>
+            </div>
+            <div class="mf-group">
+                <label>Division *</label>
+                <select id="add-div">
+                    <option value="A">Division A</option>
+                    <option value="B">Division B</option>
+                    <option value="C">Division C</option>
+                    <option value="D">Division D</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;justify-content:center;padding:.85rem;font-size:.95rem;" onclick="submitAddSubject()">
+            ✅ Save Subject
+        </button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="auth.js"></script>
+<script>
+// Mobile sidebar toggle
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+}
+
+const API = API_BASE;
+
+// Guard: teachers only
+if (!Auth.requireRole('teacher')) { /* redirected */ }
+
+const prof = Auth.getProfile();
+
+// Topbar + banner
+document.getElementById('stat-today').textContent = new Date().toLocaleDateString('en-IN');
+if (prof) {
+    const initial = prof.name ? prof.name.charAt(0).toUpperCase() : 'T';
+    document.getElementById('hdr-av').textContent   = initial;
+    document.getElementById('hdr-name').textContent = prof.name || 'Teacher';
+    document.getElementById('hdr-role').textContent = (prof.department || 'Faculty') + ' Department';
+}
+
+async function loadDashboard() {
+    try {
+        const res  = await fetch(API + '/api/teacher/dashboard', { headers: await Auth.apiHeaders() });
+        if (res.status === 401) { Auth.clearLocal(); window.location.href = 'index.html'; return; }
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const t = data.profile;
+        document.getElementById('banner-greeting').textContent = 'Welcome back, ' + (t.name || 'Professor') + ' 👋';
+        document.getElementById('tag-dept').textContent  = 'Dept: '       + (t.department   || '--');
+        document.getElementById('tag-code').textContent  = 'Teacher ID: ' + (t.teacher_code || '--');
+        document.getElementById('tag-email').textContent = t.email         || '--';
+
+        renderSubjects(data.subjects || []);
+    } catch (err) {
+        document.getElementById('subjects-grid').innerHTML =
+            `<div class="empty-subjects"><div class="empty-icon">❌</div><h3>Could not load data</h3><p>${err.message}</p></div>`;
+    }
+}
+
+function renderSubjects(subjects) {
+    document.getElementById('stat-subjects').textContent  = subjects.length;
+    document.getElementById('stat-divisions').textContent = subjects.length;
+    const grid = document.getElementById('subjects-grid');
+
+    if (subjects.length === 0) {
+        grid.innerHTML = `
+        <div class="empty-subjects">
+            <div class="empty-icon">📚</div>
+            <h3>No subjects added yet</h3>
+            <p>Add the courses you teach — each one will appear as a card where you can mark attendance and download reports.</p>
+            <button class="btn-primary" onclick="openAddModal()">➕ Add Your First Subject</button>
+        </div>`;
+        return;
+    }
+
+    grid.innerHTML = subjects.map(s => `
+        <div class="subject-card" id="scard-${s.id}">
+            <div>
+                <div class="sc-header">
+                    <span class="sc-code">${esc(s.subject_code)}</span>
+                    <span class="sc-class">Year ${s.year} · Div ${esc(s.division)}</span>
+                </div>
+                <div class="sc-name">${esc(s.subject_name)}</div>
+            </div>
+            <div class="sc-actions">
+                <button class="sc-btn mark"   onclick="goMark('${s.id}')">✏️ Mark</button>
+                <button class="sc-btn report" onclick="goReport('${s.id}')">📊 Report</button>
+                <button class="sc-btn del"    onclick="deleteSubject('${s.id}', '${esc(s.subject_name)}')">🗑️ Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function goMark(id)   { window.location.href = `attendance.html?subject_id=${id}`; }
+function goReport(id) { window.location.href = `reports.html?subject_id=${id}`; }
+
+async function deleteSubject(id, name) {
+    if (!confirm(`Delete "${name}"?\n\nThis will also remove all attendance records for this subject.`)) return;
+    try {
+        const res    = await fetch(`${API}/api/teacher/subjects/${id}`, { method: 'DELETE', headers: await Auth.apiHeaders() });
+        const result = await res.json();
+        if (result.success) {
+            const card = document.getElementById('scard-' + id);
+            if (card) card.remove();
+            const remaining = document.querySelectorAll('[id^="scard-"]').length;
+            document.getElementById('stat-subjects').textContent  = remaining;
+            document.getElementById('stat-divisions').textContent = remaining;
+            if (remaining === 0) loadDashboard();
+        } else {
+            alert('Could not delete: ' + (result.error || 'Unknown error'));
+        }
+    } catch (err) { alert('Server error: ' + err.message); }
+}
+
+function openAddModal() {
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-code').value = '';
+    showFb('add-fb', '', '');
+    document.getElementById('add-modal').classList.add('open');
+    document.getElementById('add-name').focus();
+}
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+async function submitAddSubject() {
+    const name     = document.getElementById('add-name').value.trim();
+    const code     = document.getElementById('add-code').value.trim();
+    const year     = parseInt(document.getElementById('add-year').value);
+    const division = document.getElementById('add-div').value;
+
+    if (!name || !code) { showFb('add-fb', 'Please fill in Subject Name and Code.', 'err'); return; }
+
+    try {
+        const res    = await fetch(API + '/api/teacher/subjects', {
+            method: 'POST', headers: await Auth.apiHeaders(),
+            body: JSON.stringify({ subject_name: name, subject_code: code, year, division })
+        });
+        const result = await res.json();
+        if (result.success) {
+            showFb('add-fb', '✅ Subject added!', 'ok');
+            setTimeout(() => { closeAddModal(); loadDashboard(); }, 900);
+        } else {
+            showFb('add-fb', result.error || 'Failed to add subject.', 'err');
+        }
+    } catch (err) { showFb('add-fb', 'Server error: ' + err.message, 'err'); }
+}
+
+document.getElementById('add-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeAddModal();
+});
+
+function showFb(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className   = 'feedback-box' + (type ? ' ' + type : '');
+    el.style.display = msg ? 'block' : 'none';
+}
+function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

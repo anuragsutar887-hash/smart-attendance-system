@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* ── Login Page ─────────────────────────── */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0533 0%, #2d1060 50%, #1a0533 100%);
+            padding: 1rem;
+        }
+        .login-wrapper { width: 100%; max-width: 480px; }
+        .login-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,.4);
+        }
+        .login-logo { text-align: center; margin-bottom: 1.5rem; }
+        .login-logo .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: #fff; margin-bottom: .75rem;
+        }
+        .login-logo h1 { font-size: 1.4rem; font-weight: 700; color: #1e1b4b; margin: 0; }
+        .login-logo p  { color: #6b7280; font-size: .85rem; margin: .25rem 0 0; }
+
+        /* Mode tabs */
+        .mode-tabs { display: flex; background: #f3f4f6; border-radius: 12px; padding: 4px; margin-bottom: 1.25rem; gap: 4px; }
+        .mode-tab  { flex: 1; padding: .6rem; border: none; background: transparent; border-radius: 9px; font-size: .9rem; font-weight: 700; color: #6b7280; cursor: pointer; transition: all .2s; }
+        .mode-tab.active { background: #fff; color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,.15); }
+
+        /* Role tabs */
+        .role-tabs { display: flex; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 3px; margin-bottom: 1.25rem; gap: 3px; }
+        .role-tab  { flex: 1; padding: .55rem; border: none; background: transparent; border-radius: 8px; font-size: .85rem; font-weight: 600; color: #6b7280; cursor: pointer; transition: all .2s; }
+        .role-tab.active { background: #fff; color: #7c3aed; box-shadow: 0 1px 4px rgba(124,58,237,.15); }
+
+        .tab-panel { display: none; } .tab-panel.active { display: block; }
+
+        .form-group { margin-bottom: .9rem; }
+        .form-group label { display: block; font-size: .78rem; font-weight: 700; color: #374151; margin-bottom: .35rem; text-transform: uppercase; letter-spacing: .5px; }
+        .form-group input,
+        .form-group select { width: 100%; padding: .7rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: .92rem; color: #1f2937; background: #f9fafb; transition: all .2s; box-sizing: border-box; }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: #7c3aed; background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+        .login-btn { width: 100%; padding: .85rem; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: .25rem; }
+        .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(124,58,237,.4); }
+        .login-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .msg-box { border-radius: 8px; padding: .7rem 1rem; font-size: .85rem; margin-bottom: .9rem; display: none; }
+        .msg-box.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+        .msg-box.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; display: block; }
+
+        /* ── Responsive ─── */
+        @media (max-width: 480px) {
+            .login-card { padding: 1.75rem 1.25rem; border-radius: 16px; }
+            .login-logo h1 { font-size: 1.2rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .login-btn { font-size: .95rem; }
+        }
+        @media (max-width: 360px) {
+            .login-logo .logo-icon { width: 52px; height: 52px; font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="logo-icon">🎓</div>
+            <h1>Smart Attendance</h1>
+            <p>CSE Department — Management System</p>
+        </div>
+
+        <!-- Login / Sign Up tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="setMode('login')">🔑 Login</button>
+            <button class="mode-tab" onclick="setMode('signup')">📝 Sign Up</button>
+        </div>
+
+        <!-- Role tabs -->
+        <div class="role-tabs">
+            <button class="role-tab active" onclick="setRole('student')">🎒 Student</button>
+            <button class="role-tab" onclick="setRole('teacher')">👨‍🏫 Teacher</button>
+        </div>
+
+        <!-- ── LOGIN PANELS ── -->
+        <div id="login-student" class="tab-panel active">
+            <div class="msg-box" id="ls-msg"></div>
+            <div class="form-group"><label>PRN Number</label><input type="text" id="ls-prn" placeholder="Enter your PRN" /></div>
+            <div class="form-group"><label>Password</label><input type="password" id="ls-pass" placeholder="Enter your password" /></div>
+            <button class="login-btn" onclick="doLogin('student')">Login as Student</button>
+        </div>
+
+        <div id="login-teacher" class="tab-panel">
+            <div class="msg-box" id="lt-msg"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="lt-email" placeholder="Enter your email" /></div>
+            <div class="form-group"><label>Password</label><input type="password" id="lt-pass" placeholder="Enter your password" /></div>
+            <button class="login-btn" onclick="doLogin('teacher')">Login as Teacher</button>
+        </div>
+
+        <!-- ── SIGN UP PANELS ── -->
+        <div id="signup-student" class="tab-panel">
+            <div class="msg-box" id="ss-msg"></div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="ss-name" placeholder="e.g. Anurag Sutar" /></div>
+            <div class="form-group"><label>Your Email</label><input type="email" id="ss-email" placeholder="yourname@email.com" /></div>
+            <div class="form-row">
+                <div class="form-group"><label>PRN Number</label><input type="text" id="ss-prn" placeholder="e.g. 2301099A" /></div>
+                <div class="form-group"><label>Year</label>
+                    <select id="ss-year">
+                        <option value="">Select</option>
+                        <option value="1">Year 1 (FE)</option>
+                        <option value="2">Year 2 (SE)</option>
+                        <option value="3">Year 3 (TE)</option>
+                        <option value="4">Year 4 (BE)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Division</label>
+                    <select id="ss-div">
+                        <option value="">Select</option>
+                        <option value="A">Division A</option>
+                        <option value="B">Division B</option>
+                        <option value="C">Division C</option>
+                        <option value="D">Division D</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Department</label><input type="text" id="ss-dept" placeholder="e.g. CSE" /></div>
+            </div>
+            <div class="form-group"><label>Password</label><input type="password" id="ss-pass" placeholder="Min 6 characters" /></div>
+            <button class="login-btn" onclick="doSignup('student')">Create Student Account</button>
+        </div>
+
+        <div id="signup-teacher" class="tab-panel">
+            <div class="msg-box" id="st-msg"></div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="st-name" placeholder="e.g. Prof. Sharma" /></div>
+            <div class="form-group"><label>Your Email</label><input type="email" id="st-email" placeholder="yourname@college.edu" /></div>
+            <div class="form-group"><label>Department</label><input type="text" id="st-dept" placeholder="e.g. CSE" /></div>
+            <div class="form-group"><label>Password</label><input type="password" id="st-pass" placeholder="Min 6 characters" /></div>
+            <button class="login-btn" onclick="doSignup('teacher')">Create Teacher Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Firebase SDK (compat) ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="auth.js"></script>
+
+<script>
+    let currentMode = 'login', currentRole = 'student';
+
+    // Redirect if already logged in
+    (async () => {
+        const auth = getAuth();
+        if (auth) {
+            auth.onAuthStateChanged(async (user) => {
+                if (user && Auth.isLoggedIn()) {
+                    const role = Auth.getRole();
+                    window.location.href = role === 'student' ? 'student-dashboard.html' : 'dashboard.html';
+                }
+            });
+        }
+    })();
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-tab').forEach((b, i) =>
+            b.classList.toggle('active', (i === 0 && mode === 'login') || (i === 1 && mode === 'signup'))
+        );
+        updatePanel();
+    }
+    function setRole(role) {
+        currentRole = role;
+        document.querySelectorAll('.role-tab').forEach((b, i) =>
+            b.classList.toggle('active', (i === 0 && role === 'student') || (i === 1 && role === 'teacher'))
+        );
+        updatePanel();
+    }
+    function updatePanel() {
+        ['login-student', 'login-teacher', 'signup-student', 'signup-teacher'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById(`${currentMode}-${currentRole}`).classList.add('active');
+    }
+
+    function showMsg(id, msg, type) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.className = 'msg-box ' + type;
+    }
+    function clearMsg(id) { document.getElementById(id).className = 'msg-box'; }
+
+    function getBtn(panelId) {
+        return document.querySelector(`#${panelId} .login-btn`);
+    }
+
+    // ── Login ─────────────────────────────────────────────────
+    async function doLogin(role) {
+        const msgId = role === 'student' ? 'ls-msg' : 'lt-msg';
+        const panelId = `login-${role}`;
+        clearMsg(msgId);
+
+        let email, password;
+        if (role === 'student') {
+            const prn = document.getElementById('ls-prn').value.trim();
+            password   = document.getElementById('ls-pass').value;
+            if (!prn)      { showMsg(msgId, 'Enter your PRN.', 'error'); return; }
+            if (!password) { showMsg(msgId, 'Enter your password.', 'error'); return; }
+            // Students use synthetic email: prn@attendance.local
+            email = `${prn.toLowerCase()}@attendance.local`;
+        } else {
+            email    = document.getElementById('lt-email').value.trim();
+            password = document.getElementById('lt-pass').value;
+            if (!email)    { showMsg(msgId, 'Enter your email.', 'error'); return; }
+            if (!password) { showMsg(msgId, 'Enter your password.', 'error'); return; }
+        }
+
+        const btn = getBtn(panelId);
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+
+        try {
+            const auth = getAuth();
+            if (!auth) throw new Error('Firebase not initialized. Check your FIREBASE_CONFIG in auth.js');
+
+            const cred = await auth.signInWithEmailAndPassword(email, password);
+            const user = cred.user;
+
+            // Fetch profile from backend
+            const idToken = await user.getIdToken(true);
+            const res  = await fetch(`${API_BASE}/api/auth/me`, {
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                }
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Could not load profile.');
+
+            Auth.saveProfile(data.role, data.profile);
+            window.location.href = data.role === 'student' ? 'student-dashboard.html' : 'dashboard.html';
+
+        } catch (err) {
+            let msg = err.message;
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                msg = role === 'student' ? 'Invalid PRN or password.' : 'Invalid email or password.';
+            } else if (err.code === 'auth/too-many-requests') {
+                msg = 'Too many failed attempts. Please try again later.';
+            } else if (err.code === 'auth/network-request-failed') {
+                msg = 'Network error. Check your internet connection.';
+            }
+            showMsg(msgId, msg, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = role === 'student' ? 'Login as Student' : 'Login as Teacher';
+        }
+    }
+
+    // ── Sign Up ───────────────────────────────────────────────
+    async function doSignup(role) {
+        const msgId   = role === 'student' ? 'ss-msg' : 'st-msg';
+        const panelId = `signup-${role}`;
+        clearMsg(msgId);
+
+        let payload;
+        if (role === 'student') {
+            const name       = document.getElementById('ss-name').value.trim();
+            const emailInput = document.getElementById('ss-email').value.trim();
+            const prn        = document.getElementById('ss-prn').value.trim();
+            const year       = document.getElementById('ss-year').value;
+            const division   = document.getElementById('ss-div').value;
+            const department = document.getElementById('ss-dept').value.trim();
+            const password   = document.getElementById('ss-pass').value;
+
+            if (!name)        { showMsg(msgId, 'Full name required.', 'error'); return; }
+            if (!emailInput)  { showMsg(msgId, 'Email required.', 'error'); return; }
+            if (!prn)         { showMsg(msgId, 'PRN required.', 'error'); return; }
+            if (!year)        { showMsg(msgId, 'Select your year.', 'error'); return; }
+            if (!division)    { showMsg(msgId, 'Select your division.', 'error'); return; }
+            if (!department)  { showMsg(msgId, 'Department required.', 'error'); return; }
+            if (!password || password.length < 6) { showMsg(msgId, 'Password must be at least 6 characters.', 'error'); return; }
+
+            // Students: Firebase email = prn@attendance.local (for PRN-based login)
+            // We also store their real email in Supabase profile
+            payload = {
+                role, name,
+                email:      `${prn.toLowerCase()}@attendance.local`,
+                realEmail:  emailInput,
+                password,
+                prn,
+                year:       parseInt(year),
+                division,
+                department,
+            };
+        } else {
+            const name       = document.getElementById('st-name').value.trim();
+            const email      = document.getElementById('st-email').value.trim();
+            const department = document.getElementById('st-dept').value.trim();
+            const password   = document.getElementById('st-pass').value;
+
+            if (!name)       { showMsg(msgId, 'Full name required.', 'error'); return; }
+            if (!email)      { showMsg(msgId, 'Email required.', 'error'); return; }
+            if (!department) { showMsg(msgId, 'Department required.', 'error'); return; }
+            if (!password || password.length < 6) { showMsg(msgId, 'Password must be at least 6 characters.', 'error'); return; }
+
+            payload = { role, name, email, password, department };
+        }
+
+        const btn = getBtn(panelId);
+        btn.disabled = true;
+        btn.textContent = 'Creating account...';
+
+        try {
+            const auth = getAuth();
+            if (!auth) throw new Error('Firebase not initialized. Check your FIREBASE_CONFIG in auth.js');
+
+            // Create Firebase user
+            const cred = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
+            const user = cred.user;
+            await user.updateProfile({ displayName: payload.name });
+
+            // Register in backend (Supabase)
+            const idToken = await user.getIdToken();
+            const registerBody = {
+                role:        payload.role,
+                name:        payload.name,
+                email:       payload.realEmail || payload.email,
+                firebase_uid: user.uid,
+                ...(role === 'student' ? {
+                    prn:        payload.prn,
+                    year:       payload.year,
+                    division:   payload.division,
+                    department: payload.department,
+                } : {
+                    department: payload.department,
+                })
+            };
+
+            const res  = await fetch(`${API_BASE}/api/auth/register`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                body:    JSON.stringify(registerBody),
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                // Rollback Firebase user
+                await user.delete();
+                throw new Error(data.error || 'Registration failed.');
+            }
+
+            showMsg(msgId, `✅ ${data.message} Switching to login...`, 'success');
+            setTimeout(() => { auth.signOut(); setMode('login'); }, 2000);
+
+        } catch (err) {
+            let msg = err.message;
+            if (err.code === 'auth/email-already-in-use') {
+                msg = role === 'student' ? 'This PRN is already registered. Try logging in.' : 'This email is already registered. Try logging in.';
+            } else if (err.code === 'auth/invalid-email') {
+                msg = 'Invalid email format.';
+            } else if (err.code === 'auth/weak-password') {
+                msg = 'Password must be at least 6 characters.';
+            }
+            showMsg(msgId, msg, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = role === 'student' ? 'Create Student Account' : 'Create Teacher Account';
+        }
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        if (currentMode === 'login')  doLogin(currentRole);
+        else                          doSignup(currentRole);
+    });
+</script>
+</body>
+</html>

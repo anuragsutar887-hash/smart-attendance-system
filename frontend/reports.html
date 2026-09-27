@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Reports | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .filter-controls-card {
+            background: #fff;
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-group { flex: 1; min-width: 260px; }
+        .filter-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        .filter-group select {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background: #fdfdfd;
+        }
+        .btn-download-excel {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.7rem 1.4rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            transition: all 0.2s;
+            height: 44px;
+            white-space: nowrap;
+        }
+        .btn-download-excel:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+
+        .progress-bar-container {
+            width: 120px;
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.35rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.4s ease;
+        }
+        .progress-bar-fill.good { background: #10b981; }
+        .progress-bar-fill.medium { background: #f59e0b; }
+        .progress-bar-fill.bad { background: #ef4444; }
+
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .badge-status.eligible { background: #dcfce7; color: #166534; }
+        .badge-status.shortage { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="management-page reports-page">
+    <!-- Mobile hamburger toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-mark">SA</div>
+            <div>
+                <h2>Smart Attendance</h2>
+                <span>Faculty Workspace</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="students.html"><span>👥</span> Students</a>
+            <a href="attendance.html"><span>✏️</span> Attendance</a>
+            <a href="reports.html" class="active"><span>📈</span> Reports</a>
+        </nav>
+        <button onclick="Auth.logout()" class="logout-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:0.9rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem;color:#fca5a5;">
+            <span>🚪</span> Sign Out
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="page-label">ANALYTICS & EXPORTS</p>
+                <h1>Attendance Reports</h1>
+                <p class="management-intro">Review subject-wise class statistics and export official attendance reports to Excel.</p>
+            </div>
+            <div class="profile" style="display:flex;align-items:center;gap:0.75rem;background:#fff;padding:0.4rem 0.85rem;border-radius:9999px;border:1px solid var(--border-light);">
+                <div class="profile-avatar" id="header-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, #7c3aed, #a855f7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">T</div>
+                <div>
+                    <strong id="header-user-name" style="font-size:0.9rem;display:block;">Teacher</strong>
+                    <span id="header-dept" style="font-size:0.75rem;color:var(--text-muted);">Faculty</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Course Filter and Excel Download Bar -->
+        <div class="filter-controls-card">
+            <div class="filter-group">
+                <label for="report-subject-select">Select Course / Subject</label>
+                <select id="report-subject-select" onchange="fetchReportData()">
+                    <option value="ALL">🌐 All Department Students Summary</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn-download-excel" onclick="exportToExcel()">
+                <span>📊</span> Download Excel (.csv)
+            </button>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <section class="cards" style="margin-top: 15px;">
+            <article class="card">
+                <div class="card-icon purple">ST</div>
+                <h3>Students Listed</h3>
+                <p class="card-value" id="stat-total-students">0</p>
+                <span class="card-note">In active report view</span>
+            </article>
+
+            <article class="card">
+                <div class="card-icon green">AVG</div>
+                <h3>Average Attendance</h3>
+                <p class="card-value" id="stat-avg-attendance">0.0%</p>
+                <span class="card-note">Overall class performance</span>
+            </article>
+
+            <article class="card">
+                <div class="card-icon blue">HA</div>
+                <h3>High Attendance</h3>
+                <p class="card-value" id="stat-high-attendance">0</p>
+                <span class="card-note">Students &ge; 75% eligible</span>
+            </article>
+
+            <article class="card">
+                <div class="card-icon orange">LA</div>
+                <h3>Shortage / Warning</h3>
+                <p class="card-value" id="stat-low-attendance">0</p>
+                <span class="card-note">Students &lt; 75% threshold</span>
+            </article>
+        </section>
+
+        <!-- Report Table Section -->
+        <section class="management-card report-card" style="margin-top: 25px;">
+            <div class="table-toolbar">
+                <div>
+                    <h2 id="report-section-title" style="font-size: 19px; margin-bottom: 5px; color: var(--text-main);">Class Attendance Roster</h2>
+                    <p class="management-intro" id="report-section-subtitle" style="margin-top: 0; font-size: 13px;">Review individual student class participation and percentage.</p>
+                </div>
+                <div class="search-wrapper">
+                    <label for="report-search">Search Students</label>
+                    <input type="search" id="report-search" class="search-box" placeholder="Search by PRN or Name..." />
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="student-table report-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">PRN</th>
+                            <th>Student Name</th>
+                            <th>Subject / Branch</th>
+                            <th class="text-center" style="width: 110px;">Conducted</th>
+                            <th class="text-center" style="width: 100px;">Present</th>
+                            <th class="text-center" style="width: 100px;">Absent</th>
+                            <th style="width: 160px;">Attendance %</th>
+                            <th class="text-center" style="width: 130px;">Exam Eligibility</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body">
+                        <tr><td colspan="8" class="empty-row"><div class="empty-state-content"><span class="empty-icon">⏳</span><p>Loading attendance report...</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="export-feedback" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600;"></div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        const API = API_BASE;
+
+        // Role guard: teachers only
+        if (!Auth.requireRole('teacher')) {
+            // redirected
+        }
+
+        const profile = Auth.getProfile();
+        if (profile) {
+            document.getElementById('header-avatar').textContent = profile.name ? profile.name.charAt(0).toUpperCase() : 'T';
+            document.getElementById('header-user-name').textContent = profile.name || 'Teacher';
+            document.getElementById('header-dept').textContent = profile.department ? profile.department + ' Dept' : 'Faculty';
+        }
+
+        let mySubjects = [];
+        let currentReportData = [];
+
+        // Check if subject_id passed in URL query
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedSubId = urlParams.get('subject_id');
+
+        async function initReportPage() {
+            try {
+                const res = await fetch(API + '/api/teacher/subjects', { headers: await Auth.apiHeaders() });
+                if (res.status === 401) { Auth.clearLocal(); window.location.href = 'index.html'; return; }
+                mySubjects = await res.json();
+
+                const select = document.getElementById('report-subject-select');
+                if (Array.isArray(mySubjects) && mySubjects.length > 0) {
+                    mySubjects.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = `${s.subject_name} (${s.subject_code}) — Year ${s.year} Div ${s.division}`;
+                        if (preselectedSubId && s.id == preselectedSubId) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+
+                fetchReportData();
+            } catch (err) {
+                console.error(err);
+                fetchReportData();
+            }
+        }
+
+        async function fetchReportData() {
+            const select = document.getElementById('report-subject-select');
+            const subId = select.value;
+            const tbody = document.getElementById('report-table-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state-content"><span class="empty-icon">⏳</span><p>Generating attendance analytics...</p></div></td></tr>';
+
+            try {
+                let url;
+                let isSpecificSubject = false;
+                let activeSub = null;
+
+                if (subId && subId !== 'ALL') {
+                    url = `${API}/api/teacher/reports?subject_id=${subId}`;
+                    isSpecificSubject = true;
+                    activeSub = mySubjects.find(s => s.id == subId);
+                } else {
+                    url = `${API}/api/reports`;
+                }
+
+                const res = await fetch(url, { headers: await Auth.apiHeaders() });
+                currentReportData = await res.json();
+
+                if (!Array.isArray(currentReportData) || currentReportData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state-content"><span class="empty-icon">📊</span><p>No attendance records available for this selection.</p></div></td></tr>';
+                    updateStatCards([]);
+                    return;
+                }
+
+                // Update section titles
+                if (isSpecificSubject && activeSub) {
+                    document.getElementById('report-section-title').textContent = `${activeSub.subject_name} (${activeSub.subject_code})`;
+                    document.getElementById('report-section-subtitle').textContent = `Year ${activeSub.year} · Division ${activeSub.division} — ${currentReportData.length} students enrolled`;
+                } else {
+                    document.getElementById('report-section-title').textContent = 'Department Attendance Summary';
+                    document.getElementById('report-section-subtitle').textContent = `Cumulative student performance across active courses`;
+                }
+
+                updateStatCards(currentReportData);
+                renderReportRows();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-row"><div class="empty-state-content"><span class="empty-icon">❌</span><p>${err.message || 'Error generating report'}</p></div></td></tr>`;
+            }
+        }
+
+        function updateStatCards(data) {
+            const total = data.length;
+            document.getElementById('stat-total-students').textContent = total;
+
+            if (total === 0) {
+                document.getElementById('stat-avg-attendance').textContent = '0.0%';
+                document.getElementById('stat-high-attendance').textContent = '0';
+                document.getElementById('stat-low-attendance').textContent = '0';
+                return;
+            }
+
+            let sumPct = 0;
+            let highCount = 0;
+            let lowCount = 0;
+
+            data.forEach(r => {
+                const pct = parseFloat(r.percentage) || 0;
+                sumPct += pct;
+                if (pct >= 75) highCount++;
+                else lowCount++;
+            });
+
+            const avg = (sumPct / total).toFixed(1);
+            document.getElementById('stat-avg-attendance').textContent = avg + '%';
+            document.getElementById('stat-high-attendance').textContent = highCount;
+            document.getElementById('stat-low-attendance').textContent = lowCount;
+        }
+
+        function renderReportRows() {
+            const tbody = document.getElementById('report-table-body');
+            const search = (document.getElementById('report-search').value || '').trim().toLowerCase();
+
+            const visible = currentReportData.filter(r =>
+                (r.name || '').toLowerCase().includes(search) || (r.roll_no || '').toLowerCase().includes(search)
+            );
+
+            if (visible.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state-content"><span class="empty-icon">🔍</span><p>No matching student records found.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = visible.map(r => {
+                const pct = typeof r.percentage === 'number' ? r.percentage : (parseFloat(r.percentage) || 0);
+                const isEligible = pct >= 75;
+                const fillClass = pct >= 75 ? 'good' : (pct >= 60 ? 'medium' : 'bad');
+
+                return `
+                <tr>
+                    <td><strong style="font-family:monospace;font-size:0.95rem;color:var(--text-main);">${escapeHtml(r.roll_no)}</strong></td>
+                    <td><strong>${escapeHtml(r.name)}</strong></td>
+                    <td><span style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(r.branch || 'Course')}</span></td>
+                    <td class="text-center"><strong>${r.total_classes}</strong></td>
+                    <td class="text-center"><strong style="color:#10b981;">${r.present}</strong></td>
+                    <td class="text-center"><strong style="color:#ef4444;">${r.absent}</strong></td>
+                    <td>
+                        <div style="font-weight:700;font-size:0.85rem;color:var(--text-main);">${pct.toFixed(1)}%</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill ${fillClass}" style="width: ${Math.min(pct, 100)}%;"></div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status ${isEligible ? 'eligible' : 'shortage'}">
+                            ${isEligible ? '✓ Eligible' : '⚠️ Shortage'}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function exportToExcel() {
+            const fb = document.getElementById('export-feedback');
+
+            if (!currentReportData || currentReportData.length === 0) {
+                fb.style.display = 'block';
+                fb.style.background = '#fee2e2';
+                fb.style.color = '#991b1b';
+                fb.textContent = 'No attendance data available to export.';
+                return;
+            }
+
+            const select = document.getElementById('report-subject-select');
+            let subjectName = 'Overall';
+            if (select.value !== 'ALL') {
+                const subObj = mySubjects.find(s => s.id == select.value);
+                if (subObj) subjectName = subObj.subject_name.replace(/[^a-zA-Z0-9]/g, '_');
+            }
+
+            const headers = [
+                'PRN / Roll No',
+                'Student Name',
+                'Course / Branch',
+                'Total Classes Conducted',
+                'Classes Attended (Present)',
+                'Classes Missed (Absent)',
+                'Attendance Percentage (%)',
+                'Examination Eligibility'
+            ];
+
+            const rows = currentReportData.map(r => {
+                const pct = typeof r.percentage === 'number' ? r.percentage.toFixed(1) : (parseFloat(r.percentage) || 0).toFixed(1);
+                const status = (parseFloat(pct) >= 75) ? 'Eligible' : 'Shortage (<75%)';
+                return [
+                    `"${(r.roll_no || '').replace(/"/g, '""')}"`,
+                    `"${(r.name || '').replace(/"/g, '""')}"`,
+                    `"${(r.branch || '').replace(/"/g, '""')}"`,
+                    r.total_classes,
+                    r.present,
+                    r.absent,
+                    `"${pct}%"`,
+                    `"${status}"`
+                ];
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            const today = new Date().toISOString().slice(0, 10);
+
+            downloadLink.setAttribute('href', url);
+            downloadLink.setAttribute('download', `Attendance_Report_${subjectName}_${today}.csv`);
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+
+            fb.style.display = 'block';
+            fb.style.background = '#dcfce7';
+            fb.style.color = '#166534';
+            fb.textContent = `✅ Successfully exported Attendance_Report_${subjectName}_${today}.csv to Excel!`;
+            setTimeout(() => { fb.style.display = 'none'; }, 4000);
+        }
+
+        document.getElementById('report-search').addEventListener('input', renderReportRows);
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        initReportPage();
+    </script>
+</body>
+</html>

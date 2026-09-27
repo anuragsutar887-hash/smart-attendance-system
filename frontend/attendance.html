@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance | Smart Attendance</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .subject-selector-bar {
+            background: #fff;
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-light);
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 1.25rem;
+            align-items: flex-end;
+            box-shadow: var(--shadow-sm);
+        }
+        .selector-field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        .selector-field select, .selector-field input {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background: #fdfdfd;
+        }
+        .selector-field select:focus, .selector-field input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+        }
+
+        .quick-actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .quick-btn-group { display: flex; gap: 0.5rem; }
+        .chip-action {
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .chip-action.present { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+        .chip-action.present:hover { background: #bbf7d0; }
+        .chip-action.absent { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+        .chip-action.absent:hover { background: #fecaca; }
+
+        /* Attendance Radio Buttons */
+        .att-status-toggle {
+            display: inline-flex;
+            gap: 0.5rem;
+        }
+        .btn-toggle-att {
+            padding: 0.35rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-toggle-att.present { border-color: #10b981; color: #10b981; background: #fff; }
+        .btn-toggle-att.present.active { background: #10b981; color: #fff; }
+        .btn-toggle-att.absent { border-color: #ef4444; color: #ef4444; background: #fff; }
+        .btn-toggle-att.absent.active { background: #ef4444; color: #fff; }
+    </style>
+</head>
+<body class="management-page attendance-page">
+    <!-- Mobile hamburger toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-mark">SA</div>
+            <div>
+                <h2>Smart Attendance</h2>
+                <span>Faculty Workspace</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="students.html"><span>👥</span> Students</a>
+            <a href="attendance.html" class="active"><span>✏️</span> Attendance</a>
+            <a href="reports.html"><span>📈</span> Reports</a>
+        </nav>
+        <button onclick="Auth.logout()" class="logout-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:0.9rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem;color:#fca5a5;">
+            <span>🚪</span> Sign Out
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="page-label">LECTURE SESSIONS</p>
+                <h1>Record & Review Attendance</h1>
+                <p class="management-intro">Select your subject and session date to record or update student attendance.</p>
+            </div>
+            <div class="profile" style="display:flex;align-items:center;gap:0.75rem;background:#fff;padding:0.4rem 0.85rem;border-radius:9999px;border:1px solid var(--border-light);">
+                <div class="profile-avatar" id="header-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, #7c3aed, #a855f7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">T</div>
+                <div>
+                    <strong id="header-user-name" style="font-size:0.9rem;display:block;">Teacher</strong>
+                    <span id="header-dept" style="font-size:0.75rem;color:var(--text-muted);">Faculty</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Subject & Date Selection Control Bar -->
+        <div class="subject-selector-bar">
+            <div class="selector-field">
+                <label for="select-subject">Select Course / Subject</label>
+                <select id="select-subject">
+                    <option value="">⏳ Loading your assigned courses...</option>
+                </select>
+            </div>
+            <div class="selector-field">
+                <label for="attendance-date">Session Date</label>
+                <input type="date" id="attendance-date" />
+            </div>
+            <div class="selector-field">
+                <button type="button" class="primary-button" onclick="loadClassAttendance()" style="height: 42px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span>🔄</span> Load Class
+                </button>
+            </div>
+        </div>
+
+        <section class="management-card attendance-card">
+            <!-- Active Subject Info Bar -->
+            <div class="quick-actions-bar">
+                <div>
+                    <strong id="active-class-title" style="font-size: 1.05rem; color: var(--text-main);">Course Roster</strong>
+                    <span id="active-class-meta" style="font-size: 0.82rem; color: var(--text-muted); display: block;">Select a subject above</span>
+                </div>
+                <div class="quick-btn-group">
+                    <button type="button" class="chip-action present" onclick="markAllStatus('Present')">✅ All Present</button>
+                    <button type="button" class="chip-action absent" onclick="markAllStatus('Absent')">❌ All Absent</button>
+                </div>
+            </div>
+
+            <!-- Search & Status Summary Toolbar -->
+            <div class="table-toolbar" style="margin-top: 10px;">
+                <div class="search-wrapper">
+                    <label for="student-search">Search students</label>
+                    <input type="search" id="student-search" class="search-box" placeholder="Search by PRN or Name..." />
+                </div>
+                <div id="attendance-summary" class="attendance-summary-badge" style="font-weight: 700;">
+                    Ready
+                </div>
+            </div>
+
+            <!-- Table Roster -->
+            <div class="table-wrapper">
+                <table class="student-table attendance-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">PRN</th>
+                            <th>Student Name</th>
+                            <th>Class Section</th>
+                            <th class="text-center" style="width: 220px;">Attendance Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-table-body">
+                        <tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">📚</span><p>Select a subject and date above to load student attendance.</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-message" id="attendance-message" style="margin-top: 1rem; font-weight: 600;"></div>
+
+            <div class="form-buttons" style="margin-top: 20px;">
+                <button type="button" id="save-attendance-btn" class="primary-button" style="padding: 0.85rem 2rem; font-size: 1rem;" onclick="saveClassAttendance()">
+                    💾 Save Attendance
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        const API = API_BASE;
+
+        // Role guard: teachers only
+        if (!Auth.requireRole('teacher')) {
+            // redirected
+        }
+
+        const profile = Auth.getProfile();
+        if (profile) {
+            document.getElementById('header-avatar').textContent = profile.name ? profile.name.charAt(0).toUpperCase() : 'T';
+            document.getElementById('header-user-name').textContent = profile.name || 'Teacher';
+            document.getElementById('header-dept').textContent = profile.department ? profile.department + ' Dept' : 'Faculty';
+        }
+
+        // Setup today's date
+        const todayStr = new Date().toISOString().slice(0, 10);
+        document.getElementById('attendance-date').value = todayStr;
+
+        let mySubjects = [];
+        let currentStudents = [];
+        let attendanceMap = {}; // student_id -> "Present" | "Absent"
+
+        // Check if subject_id passed in URL (from dashboard)
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedSubjectId = urlParams.get('subject_id');
+
+        // Load Teacher Subjects into Dropdown
+        async function initTeacherSubjects() {
+            try {
+                const res = await fetch(API + '/api/teacher/subjects', { headers: await Auth.apiHeaders() });
+                if (res.status === 401) { Auth.clearLocal(); window.location.href = 'index.html'; return; }
+                mySubjects = await res.json();
+
+                const select = document.getElementById('select-subject');
+                if (!Array.isArray(mySubjects) || mySubjects.length === 0) {
+                    select.innerHTML = '<option value="">No subjects assigned to your account</option>';
+                    return;
+                }
+
+                select.innerHTML = mySubjects.map(s => `
+                    <option value="${s.id}" ${preselectedSubjectId && s.id == preselectedSubjectId ? 'selected' : ''}>
+                        ${escapeHtml(s.subject_name)} (${escapeHtml(s.subject_code)}) — Year ${s.year} Div ${escapeHtml(s.division)}
+                    </option>
+                `).join('');
+
+                // Load class immediately
+                loadClassAttendance();
+            } catch (err) {
+                document.getElementById('select-subject').innerHTML = '<option value="">Error loading subjects</option>';
+            }
+        }
+
+        async function loadClassAttendance() {
+            const select = document.getElementById('select-subject');
+            const subjectId = select.value;
+            const date = document.getElementById('attendance-date').value;
+            const tbody = document.getElementById('attendance-table-body');
+            const summaryBadge = document.getElementById('attendance-summary');
+            const msgEl = document.getElementById('attendance-message');
+            msgEl.textContent = '';
+
+            if (!subjectId) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">⚠️</span><p>Please select a subject.</p></div></td></tr>';
+                return;
+            }
+
+            const currentSub = mySubjects.find(s => s.id == subjectId);
+            if (currentSub) {
+                document.getElementById('active-class-title').textContent = `${currentSub.subject_name} (${currentSub.subject_code})`;
+                document.getElementById('active-class-meta').textContent = `Year ${currentSub.year} · Division ${currentSub.division} · Date: ${date}`;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">⏳</span><p>Loading enrolled students and attendance records...</p></div></td></tr>';
+
+            try {
+                // 1. Fetch Students
+                const stuRes = await fetch(`${API}/api/teacher/students?year=${currentSub.year}&division=${encodeURIComponent(currentSub.division)}`, {
+                    headers: await Auth.apiHeaders()
+                });
+                currentStudents = await stuRes.json();
+
+                // 2. Fetch recorded attendance for this subject & date
+                const attRes = await fetch(`${API}/api/teacher/attendance?subject_id=${subjectId}&date=${date}`, {
+                    headers: await Auth.apiHeaders()
+                });
+                const existingRecs = await attRes.json();
+                
+                attendanceMap = {};
+                let isSaved = false;
+                if (Array.isArray(existingRecs) && existingRecs.length > 0) {
+                    isSaved = true;
+                    existingRecs.forEach(r => {
+                        attendanceMap[r.student_id] = r.status;
+                    });
+                } else {
+                    // Default everyone to Present
+                    currentStudents.forEach(s => {
+                        attendanceMap[s.student_id] = 'Present';
+                    });
+                }
+
+                if (!Array.isArray(currentStudents) || currentStudents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">👥</span><p>No students enrolled in Year ' + currentSub.year + ' Division ' + currentSub.division + '.</p></div></td></tr>';
+                    summaryBadge.textContent = '0 Students';
+                    return;
+                }
+
+                renderTableRows();
+                updateBadge(isSaved);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">❌</span><p>${err.message || 'Error loading records'}</p></div></td></tr>`;
+            }
+        }
+
+        function renderTableRows() {
+            const tbody = document.getElementById('attendance-table-body');
+            const search = (document.getElementById('student-search').value || '').trim().toLowerCase();
+
+            const visible = currentStudents.filter(s =>
+                (s.name || '').toLowerCase().includes(search) || (s.prn || '').toLowerCase().includes(search)
+            );
+
+            if (visible.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-row"><div class="empty-state-content"><span class="empty-icon">🔍</span><p>No students match your search.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = visible.map(s => {
+                const status = attendanceMap[s.student_id] || 'Present';
+                return `
+                <tr id="row-${s.student_id}">
+                    <td><strong style="font-family:monospace;font-size:0.95rem;color:var(--text-main);">${escapeHtml(s.prn)}</strong></td>
+                    <td><strong>${escapeHtml(s.name)}</strong></td>
+                    <td><span style="font-size:0.82rem;color:var(--text-muted);">Year ${s.year} - Div ${escapeHtml(s.division)}</span></td>
+                    <td class="text-center">
+                        <div class="att-status-toggle">
+                            <button type="button" class="btn-toggle-att present ${status === 'Present' ? 'active' : ''}" onclick="setRowStatus('${s.student_id}', 'Present')">
+                                ✓ Present
+                            </button>
+                            <button type="button" class="btn-toggle-att absent ${status === 'Absent' ? 'active' : ''}" onclick="setRowStatus('${s.student_id}', 'Absent')">
+                                ✗ Absent
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function setRowStatus(studentId, newStatus) {
+            attendanceMap[studentId] = newStatus;
+            const row = document.getElementById('row-' + studentId);
+            if (row) {
+                const btnP = row.querySelector('.btn-toggle-att.present');
+                const btnA = row.querySelector('.btn-toggle-att.absent');
+                btnP.classList.toggle('active', newStatus === 'Present');
+                btnA.classList.toggle('active', newStatus === 'Absent');
+            }
+            updateBadge(false);
+        }
+
+        function markAllStatus(status) {
+            currentStudents.forEach(s => {
+                attendanceMap[s.student_id] = status;
+            });
+            renderTableRows();
+            updateBadge(false);
+        }
+
+        function updateBadge(isSaved) {
+            const badge = document.getElementById('attendance-summary');
+            let pCount = 0, aCount = 0;
+            currentStudents.forEach(s => {
+                const st = attendanceMap[s.student_id];
+                if (st === 'Present') pCount++;
+                else if (st === 'Absent') aCount++;
+            });
+
+            if (isSaved) {
+                badge.className = 'attendance-summary-badge saved';
+                badge.textContent = `Recorded: ${pCount} Present, ${aCount} Absent`;
+            } else {
+                badge.className = 'attendance-summary-badge pending';
+                badge.textContent = `Pending Save: ${pCount} Present, ${aCount} Absent`;
+            }
+        }
+
+        async function saveClassAttendance() {
+            const select = document.getElementById('select-subject');
+            const subjectId = select.value;
+            const date = document.getElementById('attendance-date').value;
+            const msgEl = document.getElementById('attendance-message');
+            const saveBtn = document.getElementById('save-attendance-btn');
+
+            if (!subjectId || !date) {
+                msgEl.style.color = '#ef4444';
+                msgEl.textContent = 'Please select a subject and date.';
+                return;
+            }
+
+            const records = currentStudents.map(s => ({
+                student_id: s.student_id,
+                status: attendanceMap[s.student_id] || 'Present'
+            }));
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            msgEl.textContent = '';
+
+            try {
+                const res = await fetch(API + '/api/teacher/attendance', {
+                    method: 'POST',
+                    headers: await Auth.apiHeaders(),
+                    body: JSON.stringify({ subject_id: subjectId, date, records })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    msgEl.style.color = '#15803d';
+                    msgEl.textContent = '✅ ' + result.message;
+                    updateBadge(true);
+                } else {
+                    msgEl.style.color = '#ef4444';
+                    msgEl.textContent = '❌ ' + (result.error || 'Failed to save attendance.');
+                }
+            } catch (err) {
+                msgEl.style.color = '#ef4444';
+                msgEl.textContent = '❌ Server connection error.';
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Attendance';
+            }
+        }
+
+        document.getElementById('student-search').addEventListener('input', renderTableRows);
+        document.getElementById('select-subject').addEventListener('change', loadClassAttendance);
+        document.getElementById('attendance-date').addEventListener('change', loadClassAttendance);
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        initTeacherSubjects();
+    </script>
+</body>
+</html>

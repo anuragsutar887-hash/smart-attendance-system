@@ -1,0 +1,20 @@
+{
+  "name": "smart-attendance-management-system",
+  "version": "2.0.0",
+  "description": "Smart Attendance Management System with Supabase Database and Firebase Authentication",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "keywords": [
+    "attendance",
+    "management",
+    "supabase",
+    "firebase",
+    "student-portal",
+    "teacher-portal",
+    "express"
+  ],
+  "author": "Anurag Sutar",
+  "license": "MIT"
+}
